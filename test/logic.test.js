@@ -116,13 +116,44 @@ function is(a, b, label) {
 }
 
 {
-  const s = makeState({ treasures: [{ x: 2, y: 1 }] })
+  const s = makeState({ treasures: [{ x: 2, y: 1, hp: 2 }] })
   movePlayer(s, 1, 0)
-  is(s.player.x, 2, 'treasure: moved to tile x')
-  is(s.player.y, 1, 'treasure: moved to tile y')
-  is(s.treasures.length, 0, 'treasure: removed')
-  is(s.score, 100, 'treasure: +100 score')
-  is(s.turn, 1, 'treasure: turn advanced')
+  is(s.player.x, 1, 'bump chest: player stays x')
+  is(s.player.y, 1, 'bump chest: player stays y')
+  is(s.treasures[0].hp, 1, 'bump chest: hp reduced')
+  is(s.treasures.length, 1, 'bump chest: not removed')
+  is(s.turn, 1, 'bump chest: turn advanced')
+  check(s.messages.some(m => m.includes('宝箱')), 'bump chest: message')
+}
+
+{
+  const s = makeState({ gold: [{ x: 2, y: 1 }] })
+  movePlayer(s, 1, 0)
+  is(s.player.x, 2, 'gold: moved to tile x')
+  is(s.player.y, 1, 'gold: moved to tile y')
+  is(s.gold.length, 0, 'gold: removed')
+  is(s.score, 100, 'gold: +100 score')
+  is(s.turn, 1, 'gold: turn advanced')
+}
+
+{
+  const s = makeState({ player: { x: 1, y: 2 }, facing: { x: 1, y: 0 }, treasures: [{ x: 2, y: 2, hp: 2 }] })
+  playerAttack(s)
+  is(s.treasures[0].hp, 1, 'attack chest: hp reduced')
+  is(s.treasures.length, 1, 'attack chest: not removed yet')
+  is(s.score, 0, 'attack chest: no score yet')
+  is(s.turn, 1, 'attack chest: turn advanced')
+}
+
+{
+  const s = makeState({ player: { x: 1, y: 2 }, facing: { x: 1, y: 0 }, treasures: [{ x: 2, y: 2, hp: 1 }] })
+  playerAttack(s)
+  is(s.treasures.length, 0, 'destroy chest: removed')
+  is(s.gold.length, 1, 'destroy chest: gold spawned')
+  is(s.gold[0].x, 2, 'destroy chest: gold at x')
+  is(s.gold[0].y, 2, 'destroy chest: gold at y')
+  is(s.score, 100, 'destroy chest: +100 score')
+  is(s.turn, 1, 'destroy chest: turn advanced')
 }
 
 {
@@ -286,7 +317,8 @@ function is(a, b, label) {
   const s1 = makeState({
     player: { x: 3, y: 4 },
     enemies: [{ x: 5, y: 5, hp: 1 }],
-    treasures: [{ x: 7, y: 7 }],
+    treasures: [{ x: 7, y: 7, hp: 2 }],
+    gold: [{ x: 8, y: 8 }],
     hp: 3, score: 150, floor: 2, turn: 10,
     facing: { x: 0, y: -1 },
     messages: ['hello', 'world'],
@@ -305,6 +337,8 @@ function is(a, b, label) {
   is(s2.enemies.length, 1, 'roundtrip: 1 enemy')
   is(s2.enemies[0].x, 5, 'roundtrip: enemy.x')
   is(s2.treasures.length, 1, 'roundtrip: 1 treasure')
+  is(s2.gold.length, 1, 'roundtrip: 1 gold')
+  is(s2.gold[0].x, 8, 'roundtrip: gold.x')
   is(s2.messages.length, 2, 'roundtrip: 2 messages')
   is(s2.messages[0], 'hello', 'roundtrip: msg[0]')
   is(s2.messages[1], 'world', 'roundtrip: msg[1]')

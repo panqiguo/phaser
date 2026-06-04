@@ -127,7 +127,8 @@ export default class GameScene extends Phaser.Scene {
     const nx = this.state.player.x + (dx > 0 ? 1 : dx < 0 ? -1 : 0)
     const ny = this.state.player.y + (dy > 0 ? 1 : dy < 0 ? -1 : 0)
 
-    if (this.state.enemies.some(e => e.x === nx && e.y === ny)) {
+    if (this.state.enemies.some(e => e.x === nx && e.y === ny) ||
+        this.state.treasures.some(t => t.x === nx && t.y === ny)) {
       this.addAttackFx(nx, ny)
     }
 
@@ -233,10 +234,23 @@ export default class GameScene extends Phaser.Scene {
     for (const t of this.state.treasures) {
       const px = ox + t.x * TILE_SIZE
       const py = oy + t.y * TILE_SIZE
+      gfx.fillStyle(COLORS.CHEST, 1)
+      gfx.fillRect(px + 4, py + 8, TILE_SIZE - 8, TILE_SIZE - 8)
+      gfx.fillStyle(0xA0522D, 1)
+      gfx.fillRect(px + 4, py + 4, TILE_SIZE - 8, TILE_SIZE - 6)
+      gfx.fillStyle(0xffdd44, 1)
+      gfx.fillRect(px + 13, py + 12, 6, 6)
+    }
+
+    for (const g of this.state.gold) {
+      const cx = ox + g.x * TILE_SIZE + TILE_SIZE / 2
+      const cy = oy + g.y * TILE_SIZE + TILE_SIZE / 2
       gfx.fillStyle(COLORS.TREASURE, 1)
-      gfx.fillRect(px + 4, py + 4, TILE_SIZE - 8, TILE_SIZE - 8)
-      gfx.fillStyle(blink ? 0xffcc00 : 0xcc9900, 1)
-      gfx.fillRect(px + 8, py + 8, TILE_SIZE - 16, TILE_SIZE - 16)
+      gfx.fillTriangle(cx, cy - 4, cx - 4, cy, cx + 4, cy)
+      gfx.fillTriangle(cx, cy + 4, cx - 4, cy, cx + 4, cy)
+      gfx.fillStyle(0xcc9900, 1)
+      gfx.fillTriangle(cx, cy - 2, cx - 2, cy, cx + 2, cy)
+      gfx.fillTriangle(cx, cy + 2, cx - 2, cy, cx + 2, cy)
     }
 
     if (this.state.exit && !this.state.gameOver) {
@@ -303,6 +317,17 @@ export default class GameScene extends Phaser.Scene {
     if (gui.button(GAME_WIDTH - 94, GAME_HEIGHT - BOTTOM_UI + 4, 44, 22, '存档')) this.doSave()
     if (gui.button(GAME_WIDTH - 46, GAME_HEIGHT - BOTTOM_UI + 4, 44, 22, '读档')) this.doLoad()
     gui.text(GAME_WIDTH - 146, GAME_HEIGHT - 4, '← 滑', '#444444', '9px', 1, 1)
+
+    if (s.exit && !s.gameOver) {
+      const px = this.mapOffsetX + s.exit.x * TILE_SIZE
+      const py = this.mapOffsetY + s.exit.y * TILE_SIZE
+      const cx = px + TILE_SIZE / 2
+      const cy = py + TILE_SIZE / 2
+      if (Math.sin(this.blinkTimer * 0.006) > 0) {
+        gui.text(cx, cy - 7, '^', '#88ff88', '16px', 0.5, 0.5)
+        gui.text(cx, cy + 7, '^', '#88ff88', '16px', 0.5, 0.5)
+      }
+    }
 
     if (this.saveTimer > 0) {
       gui.text(GAME_WIDTH / 2, TOP_UI / 2 + 14, 'SAVED', '#88ff88', '10px', 0.5, 0.5)

@@ -18,6 +18,7 @@ export const COLORS = {
   PLAYER: 0x4499ff,
   ENEMY: 0xff4444,
   TREASURE: 0xffdd44,
+  CHEST: 0x8B4513,
   EXIT: 0x44ff88,
   BG: 0x1a1a1a,
   HP_BAR: 0xff3333,

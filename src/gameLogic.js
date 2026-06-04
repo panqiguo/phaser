@@ -7,6 +7,7 @@ export function createState(overrides = {}) {
     player: { x: 0, y: 0 },
     enemies: [],
     treasures: [],
+    gold: [],
     exit: { x: 0, y: 0 },
     facing: { x: 0, y: 1 },
     hp: 5,
@@ -25,7 +26,8 @@ export function initFloor(state, floor) {
   state.map = d.map
   state.player = { x: d.playerStart.x, y: d.playerStart.y }
   state.enemies = d.enemies.map(e => ({ ...e }))
-  state.treasures = d.treasures.map(t => ({ ...t }))
+  state.treasures = d.treasures.map(t => ({ ...t, hp: 2 }))
+  state.gold = []
   state.exit = { x: d.exit.x, y: d.exit.y }
   state.turn = 0
 }
@@ -70,9 +72,24 @@ export function movePlayer(state, dx, dy) {
 
   const ti = state.treasures.findIndex(t => t.x === nx && t.y === ny)
   if (ti !== -1) {
-    state.treasures.splice(ti, 1)
+    state.treasures[ti].hp--
+    if (state.treasures[ti].hp <= 0) {
+      state.gold.push({ x: nx, y: ny })
+      state.treasures.splice(ti, 1)
+      state.score += 100
+      addMessage(state, '宝箱碎了! 掉出金币!')
+    } else {
+      addMessage(state, `撞击宝箱! (${state.treasures[ti].hp}HP 剩余)`)
+    }
+    endTurn(state)
+    return
+  }
+
+  const gi = state.gold.findIndex(g => g.x === nx && g.y === ny)
+  if (gi !== -1) {
+    state.gold.splice(gi, 1)
     state.score += 100
-    addMessage(state, 'Treasure! +100')
+    addMessage(state, '拾取金币! +100')
   }
 
   state.player.x = nx
@@ -108,6 +125,21 @@ export function playerAttack(state) {
     state.enemies.splice(ei, 1)
     state.score += 50
     addMessage(state, 'Hit enemy! +50')
+    endTurn(state)
+    return
+  }
+
+  const ti = state.treasures.findIndex(t => t.x === tx && t.y === ty)
+  if (ti !== -1) {
+    state.treasures[ti].hp--
+    if (state.treasures[ti].hp <= 0) {
+      state.gold.push({ x: tx, y: ty })
+      state.treasures.splice(ti, 1)
+      state.score += 100
+      addMessage(state, '宝箱碎了! 掉出金币!')
+    } else {
+      addMessage(state, `攻击宝箱! (${state.treasures[ti].hp}HP 剩余)`)
+    }
     endTurn(state)
     return
   }
@@ -152,6 +184,7 @@ function tryMoveEnemy(state, enemy, dx, dy) {
   if (nx < 0 || nx >= MAP_COLS || ny < 0 || ny >= MAP_ROWS) return false
   if (state.map[ny][nx] === TILE.WALL) return false
   if (state.enemies.some(e => e !== enemy && e.x === nx && e.y === ny)) return false
+  if (state.treasures.some(t => t.x === nx && t.y === ny)) return false
 
   if (state.player.x === nx && state.player.y === ny) {
     enemyAttack(state)
@@ -176,6 +209,7 @@ export function saveData(state) {
     map: state.map,
     enemies: state.enemies.map(e => ({ ...e })),
     treasures: state.treasures.map(t => ({ ...t })),
+    gold: state.gold.map(g => ({ ...g })),
     exit: { ...state.exit },
   }
 }
@@ -192,6 +226,7 @@ export function loadData(state, data) {
   state.map = data.map
   state.enemies = data.enemies
   state.treasures = data.treasures
+  state.gold = data.gold || []
   state.exit = data.exit
   state.gameOver = false
 }

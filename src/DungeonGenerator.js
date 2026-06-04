@@ -96,9 +96,12 @@ export function generateDungeon(floor) {
   }
 
   const treasures = []
-  for (let i = 1; i < rooms.length; i += 2) {
-    const c = roomCenter(rooms[i])
-    treasures.push({ x: c.x, y: c.y })
+  for (let i = 1; i < rooms.length - 1; i++) {
+    if (Math.random() < 0.4) {
+      const c = roomCenter(rooms[i])
+      const off = rand(0, 1) === 0 ? [1, 0] : [0, 1]
+      treasures.push({ x: c.x + off[0], y: c.y + off[1], hp: 2 })
+    }
   }
 
   const exit = roomCenter(rooms[rooms.length - 1])
